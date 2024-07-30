@@ -24,7 +24,7 @@ func NewLibraryController(service services.LibraryManager) *LibraryController {
 }
 
 func (lc *LibraryController) AddMember() {
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 	fmt.Print("Enter the member's name: ")
 	name, _ := lc.reader.ReadString('\n')
@@ -35,12 +35,12 @@ func (lc *LibraryController) AddMember() {
 
 	fmt.Println("Member added.")
 
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 }
 
 func (lc *LibraryController) AddBook() {
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 	fmt.Print("Enter book title: ")
 	title, _ := lc.reader.ReadString('\n')
@@ -54,12 +54,12 @@ func (lc *LibraryController) AddBook() {
 	lc.service.AddBook(book)
 	fmt.Println("Book added.")
 
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 }
 
 func (lc *LibraryController) RemoveBook() {
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 	fmt.Print("Enter book ID to be Removed: ")
 	bookIDs, _ := lc.reader.ReadString('\n')
@@ -72,12 +72,13 @@ func (lc *LibraryController) RemoveBook() {
 		fmt.Println("Book removed.")
 	}
 
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 }
 
 func (lc *LibraryController) BorrowBook() {
-	fmt.Println("\n\n*************************************************\n\n")
+
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 	fmt.Print("Enter book ID to borrow: ")
 	bookIDStr, _ := lc.reader.ReadString('\n')
@@ -92,12 +93,12 @@ func (lc *LibraryController) BorrowBook() {
 	} else {
 		fmt.Println("Book borrowed.")
 	}
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 }
 
 func (lc *LibraryController) ReturnBook() {
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 	fmt.Print("Enter book ID to return: ")
 	bookIDStr, _ := lc.reader.ReadString('\n')
@@ -113,23 +114,27 @@ func (lc *LibraryController) ReturnBook() {
 		fmt.Println("Book returned.")
 	}
 
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 }
 
 func (lc *LibraryController) ListAvailableBooks() {
 	books := lc.service.ListAvailableBooks()
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 	fmt.Println("Available Books:")
-	for _, book := range books {
-		fmt.Printf("ID: %d, Title: %s, Author: %s , **%s** \n \n", book.ID, book.Title, book.Author, book.Status)
-	}
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println(strings.Repeat("-", 80))
 
+	fmt.Printf("| %-5s | %-30s | %-15s | %-10s |\n", "ID", "Title", "Author", "Status")
+	fmt.Println(strings.Repeat("-", 80))
+	for _, book := range books {
+		fmt.Printf("| %-5d | %-30s | %-15s | %-10s |\n", book.ID, book.Title, book.Author, book.Status)
+	}
+	fmt.Println(strings.Repeat("-", 80))
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 }
 
 func (lc *LibraryController) ListBorrowedBooks() {
-	fmt.Println("\n\n*************************************************\n\n")
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 
 	fmt.Print("Enter member ID to list borrowed books: ")
 	memberIDStr, _ := lc.reader.ReadString('\n')
@@ -138,9 +143,12 @@ func (lc *LibraryController) ListBorrowedBooks() {
 	books, _ := lc.service.ListBorrowedBooks(memberID)
 
 	fmt.Println("Borrowed Books:")
+	fmt.Println(strings.Repeat("-", 80))
+	fmt.Printf("| %-5s | %-30s | %-15s |\n", "ID", "Title", "Author")
+	fmt.Println(strings.Repeat("-", 80))
 	for _, book := range books {
-		fmt.Printf("ID: %d, Title: %s, Author: %s\n", book.ID, book.Title, book.Author)
+		fmt.Printf("| %-5d | %-30s | %-15s |\n", book.ID, book.Title, book.Author)
 	}
-	fmt.Println("\n\n*************************************************\n\n")
-
+	fmt.Println(strings.Repeat("-", 80))
+	fmt.Println("\n", strings.Repeat("*", 50), "\n")
 }
