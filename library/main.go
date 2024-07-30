@@ -11,7 +11,7 @@ func main() {
 	controller := controllers.NewLibraryController(library)
 
 	for {
-		fmt.Println("Library Management System")
+		fmt.Println("\n\nLibrary Management System")
 		fmt.Println("0. Add Member")
 		fmt.Println("1. Add Book")
 		fmt.Println("2. Remove Book")
