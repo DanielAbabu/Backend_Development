@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"library/controllers"
 	"library/services"
+	"strings"
 )
 
 func main() {
@@ -11,49 +12,43 @@ func main() {
 	controller := controllers.NewLibraryController(library)
 
 	for {
-		fmt.Println("\n\nLibrary Management System")
-		fmt.Println("0. Add Member")
-		fmt.Println("1. Add Book")
-		fmt.Println("2. Remove Book")
-		fmt.Println("3. Borrow Book")
-		fmt.Println("4. Return Book")
-		fmt.Println("5. List Available Books")
-		fmt.Println("6. List Borrowed Books")
-		fmt.Println("7. Exit")
-		fmt.Print("Choose an option: ")
+		fmt.Println("\n\n", strings.Repeat("=", 60), "\n")
+		fmt.Println("                 Library Management System")
+		fmt.Println("\n", strings.Repeat("=", 60), "\n")
+		fmt.Println("  1. Add Member")
+		fmt.Println("  2. Add Book")
+		fmt.Println("  3. Remove Book")
+		fmt.Println("  4. Borrow Book")
+		fmt.Println("  5. Return Book")
+		fmt.Println("  6. List Available Books")
+		fmt.Println("  7. List Borrowed Books")
+		fmt.Println("  8. Exit")
+		fmt.Println(strings.Repeat("=", 60))
+		fmt.Print("  Choose an option: ")
 
 		var choice string
 		fmt.Scanln(&choice)
 
 		switch choice {
-
-		case "0":
-			controller.AddMember()
-
 		case "1":
-			controller.AddBook()
-
+			controller.AddMember()
 		case "2":
-			controller.RemoveBook()
-
+			controller.AddBook()
 		case "3":
-			controller.BorrowBook()
-
+			controller.RemoveBook()
 		case "4":
-			controller.ReturnBook()
-
+			controller.BorrowBook()
 		case "5":
-			controller.ListAvailableBooks()
-
+			controller.ReturnBook()
 		case "6":
-			controller.ListBorrowedBooks()
-
+			controller.ListAvailableBooks()
 		case "7":
-			fmt.Println("Good bye")
+			controller.ListBorrowedBooks()
+		case "8":
+			fmt.Println("\nGoodbye!")
 			return
-
 		default:
-			fmt.Println("Invalid choice. Please try again.")
+			fmt.Println("\nInvalid choice. Please try again.")
 		}
 	}
 }
