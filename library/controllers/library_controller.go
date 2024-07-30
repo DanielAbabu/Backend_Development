@@ -24,7 +24,7 @@ func NewLibraryController(service services.LibraryManager) *LibraryController {
 }
 
 func (lc *LibraryController) AddMember() {
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 	fmt.Print("Enter the member's name: ")
 	name, _ := lc.reader.ReadString('\n')
@@ -35,12 +35,12 @@ func (lc *LibraryController) AddMember() {
 
 	fmt.Println("Member added.")
 
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 }
 
 func (lc *LibraryController) AddBook() {
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 	fmt.Print("Enter book title: ")
 	title, _ := lc.reader.ReadString('\n')
@@ -54,12 +54,12 @@ func (lc *LibraryController) AddBook() {
 	lc.service.AddBook(book)
 	fmt.Println("Book added.")
 
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 }
 
 func (lc *LibraryController) RemoveBook() {
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 	fmt.Print("Enter book ID to be Removed: ")
 	bookIDs, _ := lc.reader.ReadString('\n')
@@ -72,13 +72,13 @@ func (lc *LibraryController) RemoveBook() {
 		fmt.Println("Book removed.")
 	}
 
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 }
 
 func (lc *LibraryController) BorrowBook() {
 
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 	fmt.Print("Enter book ID to borrow: ")
 	bookIDStr, _ := lc.reader.ReadString('\n')
@@ -93,12 +93,12 @@ func (lc *LibraryController) BorrowBook() {
 	} else {
 		fmt.Println("Book borrowed.")
 	}
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 }
 
 func (lc *LibraryController) ReturnBook() {
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 	fmt.Print("Enter book ID to return: ")
 	bookIDStr, _ := lc.reader.ReadString('\n')
@@ -114,16 +114,17 @@ func (lc *LibraryController) ReturnBook() {
 		fmt.Println("Book returned.")
 	}
 
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 }
 
 func (lc *LibraryController) ListAvailableBooks() {
 	books := lc.service.ListAvailableBooks()
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 	if len(books) == 0 {
 		fmt.Println(strings.Repeat(" ", 33), "NO BOOKS AVAILABLE!")
+		fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 	} else {
 
@@ -137,11 +138,10 @@ func (lc *LibraryController) ListAvailableBooks() {
 		}
 		fmt.Println(strings.Repeat("-", 73))
 	}
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
 }
 
 func (lc *LibraryController) ListBorrowedBooks() {
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
+	fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 	fmt.Print("Enter member ID to list borrowed books: ")
 	memberIDStr, _ := lc.reader.ReadString('\n')
@@ -151,6 +151,7 @@ func (lc *LibraryController) ListBorrowedBooks() {
 
 	if len(books) == 0 {
 		fmt.Println("\n\n", strings.Repeat(" ", 33), "NO BOOKS AVAILABLE!")
+		fmt.Println("\n", strings.Repeat("-", 73), "\n")
 
 	} else {
 
@@ -166,5 +167,4 @@ func (lc *LibraryController) ListBorrowedBooks() {
 
 	}
 
-	fmt.Println("\n", strings.Repeat("*", 73), "\n")
 }

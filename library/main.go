@@ -12,9 +12,8 @@ func main() {
 	controller := controllers.NewLibraryController(library)
 
 	for {
-		fmt.Println("\n\n", strings.Repeat("=", 60), "\n")
-		fmt.Println("                 Library Management System")
-		fmt.Println("\n", strings.Repeat("=", 60), "\n")
+		fmt.Println("\n\n                          Library Management System")
+		fmt.Println("\n", strings.Repeat("=", 73), "\n")
 		fmt.Println("  1. Add Member")
 		fmt.Println("  2. Add Book")
 		fmt.Println("  3. Remove Book")
@@ -23,8 +22,7 @@ func main() {
 		fmt.Println("  6. List Available Books")
 		fmt.Println("  7. List Borrowed Books")
 		fmt.Println("  8. Exit")
-		fmt.Println(strings.Repeat("=", 60))
-		fmt.Print("  Choose an option: ")
+		fmt.Print("\n  Choose an option: ")
 
 		var choice string
 		fmt.Scanln(&choice)
