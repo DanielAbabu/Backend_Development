@@ -7,5 +7,5 @@ import (
 func main() {
 	route := router.Setup()
 
-	route.Run("localhost:8080")
+	route.Run("localhost:8000")
 }
