@@ -35,18 +35,31 @@ var tasks map[string]models.Task = map[string]models.Task{
 		ID:          "5",
 		Title:       "Task 5",
 		Description: "Build a responsive front-end with React and Tailwind CSS",
-		Status:      "In Review",
+		Status:      "Compelete",
 	},
 }
 
 var TaskIDs = 6
 
-func Add(new models.Task) models.Task {
+func Add(new models.Task) (models.Task, error) {
 	new.ID = strconv.Itoa(TaskIDs)
 	TaskIDs += 1
 
+	if new.Title == "" {
+		return models.Task{}, errors.New("title can not be empty")
+	}
+
+	if new.Status == "" {
+		return models.Task{}, errors.New("status can not be empty")
+	}
+
+	if new.Status != "Compelete" && new.Status != "Not Started" && new.Status != "In Progress" {
+		return models.Task{}, errors.New("status must be Compelete, Not Started or In Progress")
+
+	}
+
 	tasks[new.ID] = new
-	return new
+	return new, nil
 }
 
 func Update(ID string, new models.Task) error {

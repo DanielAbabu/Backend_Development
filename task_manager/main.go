@@ -4,21 +4,25 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"task_manager/controllers"
 	"task_manager/data"
 	"task_manager/router"
 
-	// "github.com/danielababu/task_manager/controllers"
-	// "github.com/danielababu/task_manager/data"
-	// "github.com/danielababu/task_manager/router"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
-	// Set MongoDB client options
-	clientOptions := options.Client().ApplyURI("mongodb+srv://danielababu:q6NBfCGOlAOAuR4F@taskmanagement.ntpfnxc.mongodb.net/?retryWrites=true&w=majority")
+	// Retrieve the MongoDB URI from the environment variable
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
+	mongoURI := os.Getenv("MONGODB_URI")
+	clientOptions := options.Client().ApplyURI(mongoURI)
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
@@ -32,17 +36,11 @@ func main() {
 
 	fmt.Println("Connected to MongoDB!")
 
-	// Get a handle for your database
 	db := client.Database("taskmanager")
-
-	// Initialize task service and controller
 	taskService := data.NewTaskService(db)
 	taskController := controllers.NewTaskController(taskService)
 
-	// Set up the router
 	r := router.SetupRouter(taskController)
-
-	// Run the server
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Error running server: %v", err)
 	}

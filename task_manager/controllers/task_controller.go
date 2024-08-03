@@ -17,7 +17,6 @@ func NewTaskController(data *data.TaskService) *TaskController {
 	return &TaskController{data: data}
 }
 
-// CreateTask handles POST requests to create a new task
 func (tc *TaskController) CreateTask(c *gin.Context) {
 	var task models.Task
 	if err := c.BindJSON(&task); err != nil {
@@ -35,7 +34,6 @@ func (tc *TaskController) CreateTask(c *gin.Context) {
 	c.JSON(http.StatusCreated, task)
 }
 
-// GetTasks handles GET requests to retrieve all tasks
 func (tc *TaskController) GetTasks(c *gin.Context) {
 	tasks, err := tc.data.GetTasks()
 	if err != nil {
@@ -46,7 +44,6 @@ func (tc *TaskController) GetTasks(c *gin.Context) {
 	c.JSON(http.StatusOK, tasks)
 }
 
-// GetTask handles GET requests to retrieve a task by ID
 func (tc *TaskController) GetTask(c *gin.Context) {
 	id := c.Param("id")
 	task, err := tc.data.GetTask(id)
@@ -58,7 +55,6 @@ func (tc *TaskController) GetTask(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
-// UpdateTask handles PUT requests to update a task by ID
 func (tc *TaskController) UpdateTask(c *gin.Context) {
 	id := c.Param("id")
 	var update models.Task
@@ -76,7 +72,6 @@ func (tc *TaskController) UpdateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Task updated"})
 }
 
-// DeleteTask handles DELETE requests to remove a task by ID
 func (tc *TaskController) DeleteTask(c *gin.Context) {
 	id := c.Param("id")
 	_, err := tc.data.DeleteTask(id)

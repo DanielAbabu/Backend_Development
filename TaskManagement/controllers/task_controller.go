@@ -39,7 +39,11 @@ func AddTask(g *gin.Context) {
 		return
 	}
 
-	ntask := data.Add(task)
+	ntask, err := data.Add(task)
+	if err != nil {
+		g.JSON(http.StatusBadRequest, error.Error(err))
+	}
+
 	g.JSON(http.StatusAccepted, gin.H{"The New task": ntask})
 }
 
