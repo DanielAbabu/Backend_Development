@@ -4,6 +4,7 @@ import (
 	"TaskManagement/data"
 	"TaskManagement/models"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,11 +40,26 @@ func AddTask(g *gin.Context) {
 		return
 	}
 
-	ntask, err := data.Add(task)
-	if err != nil {
-		g.JSON(http.StatusBadRequest, error.Error(err))
+	task.Title = strings.TrimSpace(task.Title)
+	task.Status = strings.TrimSpace(task.Status)
+
+	if task.Title == "" {
+		g.JSON(http.StatusBadRequest, "title can not be empty")
+		return
 	}
 
+	if task.Status == "" {
+		g.JSON(http.StatusBadRequest, "status can not be empty")
+		return
+	}
+
+	if task.Status != "Complete" && task.Status != "Not Started" && task.Status != "In Progress" {
+		g.JSON(http.StatusBadRequest, "status must be Complete, Not Started or In Progress")
+		return
+
+	}
+
+	ntask := data.Add(task)
 	g.JSON(http.StatusAccepted, gin.H{"The New task": ntask})
 }
 
