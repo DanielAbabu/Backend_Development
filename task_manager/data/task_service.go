@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"errors"
+	"sync"
 	"task_manager/models"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,37 +11,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// var collection *mongo.Collection
-
-// func init() {
-// 	err := godotenv.Load()
-// 	if err != nil {
-// 		log.Fatal("Error loading .env file")
-// 	}
-
-// 	// Retrieve the MongoDB URI from the environment variable
-// 	mongoURI := os.Getenv("MONGODB_URI")
-
-// 	clientOptions := options.Client().ApplyURI(mongoURI)
-// 	client, err := mongo.Connect(context.TODO(), clientOptions)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	collection = client.Database("task_management").Collection("tasks")
-// }
-
 type TaskService struct {
 	collection *mongo.Collection
+	mutex      sync.Mutex
 }
 
 func NewTaskService(db *mongo.Database) *TaskService {
 	return &TaskService{
 		collection: db.Collection("tasks"),
+		mutex:      sync.Mutex{},
 	}
 }
 
 func (tc *TaskService) CreateTask(task models.Task) (*mongo.InsertOneResult, error) {
+	tc.mutex.Lock()
+	defer tc.mutex.Unlock()
+
 	if task.Title == "" {
 		return nil, errors.New("title can not be empty")
 	}
@@ -51,15 +37,16 @@ func (tc *TaskService) CreateTask(task models.Task) (*mongo.InsertOneResult, err
 
 	if task.Status != "Complete" && task.Status != "Not Started" && task.Status != "In Progress" {
 		return nil, errors.New("status must be Compelete, Not Started or In Progress")
-
 	}
 	return tc.collection.InsertOne(context.TODO(), task)
 }
 
 func (tc *TaskService) GetTasks() ([]models.Task, error) {
+	tc.mutex.Lock()
+	defer tc.mutex.Unlock()
+
 	cursor, err := tc.collection.Find(context.TODO(), bson.D{{}})
 	if err != nil {
-
 		return nil, err
 	}
 	defer cursor.Close(context.TODO())
@@ -73,6 +60,9 @@ func (tc *TaskService) GetTasks() ([]models.Task, error) {
 }
 
 func (tc *TaskService) GetTask(id string) (*models.Task, error) {
+	tc.mutex.Lock()
+	defer tc.mutex.Unlock()
+
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -88,6 +78,9 @@ func (tc *TaskService) GetTask(id string) (*models.Task, error) {
 }
 
 func (tc *TaskService) UpdateTask(id string, update models.Task) (*mongo.UpdateResult, error) {
+	tc.mutex.Lock()
+	defer tc.mutex.Unlock()
+
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -103,6 +96,9 @@ func (tc *TaskService) UpdateTask(id string, update models.Task) (*mongo.UpdateR
 }
 
 func (tc *TaskService) DeleteTask(id string) (*mongo.DeleteResult, error) {
+	tc.mutex.Lock()
+	defer tc.mutex.Unlock()
+
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
