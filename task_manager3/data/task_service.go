@@ -3,7 +3,6 @@ package data
 import (
 	"context"
 	"errors"
-	"sync"
 	"task_manager3/models"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,96 +12,85 @@ import (
 
 type TaskService struct {
 	collection *mongo.Collection
-	mutex      sync.Mutex
 }
 
 func NewTaskService(db *mongo.Database) *TaskService {
-	return &TaskService{
-		collection: db.Collection("tasks"),
-		mutex:      sync.Mutex{},
-	}
+	collection := db.Collection("tasks")
+	return &TaskService{collection: collection}
+
 }
 
-func (tc *TaskService) CreateTask(task models.Task) (*mongo.InsertOneResult, error) {
-	tc.mutex.Lock()
-	defer tc.mutex.Unlock()
+func (ts *TaskService) CreateTask(newtask *models.Task) (*mongo.InsertOneResult, error) {
 
-	if task.Title == "" {
-		return nil, errors.New("title can not be empty")
+	if newtask.Description == "" || newtask.Status == "" || newtask.Title == "" {
+		return nil, errors.New("incomplete information")
 	}
 
-	if task.Status == "" {
-		return nil, errors.New("status can not be empty")
-	}
-
-	if task.Status != "Complete" && task.Status != "Not Started" && task.Status != "In Progress" {
-		return nil, errors.New("status must be Compelete, Not Started or In Progress")
-	}
-	return tc.collection.InsertOne(context.TODO(), task)
+	return ts.collection.InsertOne(context.TODO(), newtask)
 }
 
-func (tc *TaskService) GetTasks() ([]models.Task, error) {
-	tc.mutex.Lock()
-	defer tc.mutex.Unlock()
+func (ts *TaskService) GetTask(id string) (*models.Task, error) {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
 
-	cursor, err := tc.collection.Find(context.TODO(), bson.D{{}})
+	var task models.Task
+
+	err = ts.collection.FindOne(context.TODO(), bson.M{"_id": oid}).Decode(&task)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &task, nil
+
+}
+func (ts *TaskService) GetTasks(userid string) (*[]models.Task, error) {
+	uid, err := primitive.ObjectIDFromHex(userid)
+	if err != nil {
+		return nil, err
+	}
+	cursor, err := ts.collection.Find(context.TODO(), bson.M{"user_id": uid})
+
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(context.TODO())
 
 	var tasks []models.Task
+
 	if err = cursor.All(context.TODO(), &tasks); err != nil {
 		return nil, err
 	}
+	return &tasks, nil
 
-	return tasks, nil
 }
+func (ts *TaskService) UpdateTask(id string, updatedtask *models.Task) (*mongo.UpdateResult, error) {
 
-func (tc *TaskService) GetTask(id string) (*models.Task, error) {
-	tc.mutex.Lock()
-	defer tc.mutex.Unlock()
+	oid, err := primitive.ObjectIDFromHex(id)
 
-	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var task models.Task
-	err = tc.collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&task)
-	if err != nil {
-		return nil, err
-	}
-
-	return &task, nil
-}
-
-func (tc *TaskService) UpdateTask(id string, update models.Task) (*mongo.UpdateResult, error) {
-	tc.mutex.Lock()
-	defer tc.mutex.Unlock()
-
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return tc.collection.UpdateOne(
+	return ts.collection.UpdateOne(
 		context.TODO(),
-		bson.M{"_id": objectID},
+		bson.M{"_id": oid},
 		bson.D{
-			{Key: "$set", Value: update},
+			{Key: "$set", Value: updatedtask},
 		},
 	)
+
 }
+func (ts *TaskService) RemoveTask(id string) (*mongo.DeleteResult, error) {
 
-func (tc *TaskService) DeleteTask(id string) (*mongo.DeleteResult, error) {
-	tc.mutex.Lock()
-	defer tc.mutex.Unlock()
+	oid, err := primitive.ObjectIDFromHex(id)
 
-	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return tc.collection.DeleteOne(context.TODO(), bson.M{"_id": objectID})
+	return ts.collection.DeleteOne(context.TODO(), bson.M{"_id": oid})
+
 }

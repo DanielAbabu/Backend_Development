@@ -3,9 +3,10 @@ package data
 import (
 	"context"
 	"errors"
-
+	"os"
 	"task_manager3/models"
 
+	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -16,42 +17,83 @@ type UserService struct {
 }
 
 func NewUserService(db *mongo.Database) *UserService {
-	return &UserService{
-		collection: db.Collection("user"),
-	}
+	collection := db.Collection("users")
+	return &UserService{collection: collection}
+
 }
 
-func (us *UserService) Register(user *models.User) error {
-	var usr models.User
-	err := us.collection.FindOne(context.TODO(), bson.M{"email": user.Email}).Decode(&usr)
+func (us *UserService) Register(user *models.User) (*mongo.InsertOneResult, error) {
 
-	if err == nil {
-		return errors.New("Account Already exists")
+	if user.Email == "" || user.Role == "" {
+		return nil, errors.New("incomplete information")
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	user.Password = string(hashedPassword)
+	return us.collection.InsertOne(context.TODO(), user)
 
-	user.Password = string(hash)
-
-	_, err = us.collection.InsertOne(context.TODO(), user)
-
-	return err
 }
 
-func (us *UserService) Authenticate(email string, password string) (*models.User, error) {
+func (us *UserService) Login(user *models.User) (string, error) {
+
+	var u models.User
+	err := us.collection.FindOne(context.TODO(), bson.M{"email": user.Email}).Decode(&u)
+
+	if err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(user.Password)); err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": u.ID.Hex(),
+		"email":   u.Email,
+		"role":    u.Role,
+	})
+
+	var jwtSecret []byte = []byte(os.Getenv("secret"))
+
+	jwtToken, err := token.SignedString(jwtSecret)
+	if err != nil {
+		return "", err
+	}
+	return jwtToken, nil
+
+}
+
+func (us *UserService) GetUser(email string) (*models.User, error) {
+
 	var user models.User
-	err := us.collection.FindOne(context.TODO(), bson.M{"email": email}).Decode(&user)
-	if err != nil {
-		return nil, errors.New("invalid email or password")
-	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return nil, errors.New("invalid email or password")
+	err := us.collection.FindOne(context.TODO(), bson.M{"email": email}).Decode(&user)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return &user, nil
+
+}
+
+func (us *UserService) GetUsers() (*[]models.User, error) {
+
+	cursor, err := us.collection.Find(context.TODO(), bson.D{{}})
+
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var users []models.User
+
+	if err = cursor.All(context.TODO(), &users); err != nil {
+		return nil, err
+	}
+	return &users, nil
 
 }

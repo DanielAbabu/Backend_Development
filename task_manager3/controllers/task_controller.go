@@ -10,75 +10,134 @@ import (
 )
 
 type TaskController struct {
-	data *data.TaskService
+	service *data.TaskService
 }
 
-func NewTaskController(data *data.TaskService) *TaskController {
-	return &TaskController{data: data}
+func NewTaskController(service *data.TaskService) *TaskController {
+	return &TaskController{service: service}
 }
 
-func (tc *TaskController) CreateTask(c *gin.Context) {
-	var task models.Task
-	if err := c.BindJSON(&task); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func (tc *TaskController) CreateTask(ctx *gin.Context) {
+	role, exists := ctx.Get("role")
+	if !exists || role != "user" {
+		ctx.JSON(http.StatusForbidden, gin.H{"message": "user-only"})
 		return
 	}
+	var newtask models.Task
 
-	result, err := tc.data.CreateTask(task)
+	if err := ctx.BindJSON(&newtask); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userid, exists := ctx.Get("user_id")
+
+	if !exists {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "user id not found"})
+		return
+	}
+	useridstr, ok := userid.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "user ID is not a valid string"})
+		return
+	}
+	userObjectID, err := primitive.ObjectIDFromHex(useridstr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "user ID is not a valid ObjectID"})
 		return
 	}
+	newtask.UserID = userObjectID
 
-	task.ID = result.InsertedID.(primitive.ObjectID)
-	c.JSON(http.StatusCreated, task)
-}
+	result, err := tc.service.CreateTask(&newtask)
 
-func (tc *TaskController) GetTasks(c *gin.Context) {
-	tasks, err := tc.data.GetTasks()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
+		newtask.ID = oid
+	} else {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrive the inserted ID"})
+		return
+	}
+	ctx.JSON(http.StatusCreated, newtask)
 
-	c.JSON(http.StatusOK, tasks)
 }
-
-func (tc *TaskController) GetTask(c *gin.Context) {
-	id := c.Param("id")
-	task, err := tc.data.GetTask(id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+func (tc *TaskController) GetTask(ctx *gin.Context) {
+	role, exists := ctx.Get("role")
+	if !exists || role != "user" {
+		ctx.JSON(http.StatusForbidden, gin.H{"message": "user-only"})
 		return
 	}
+	id := ctx.Param("id")
+	task, err := tc.service.GetTask(id)
 
-	c.JSON(http.StatusOK, task)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, task)
+
 }
-
-func (tc *TaskController) UpdateTask(c *gin.Context) {
-	id := c.Param("id")
-	var update models.Task
-	if err := c.BindJSON(&update); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func (tc *TaskController) GetTasks(ctx *gin.Context) {
+	role, exists := ctx.Get("role")
+	if !exists || role != "user" {
+		ctx.JSON(http.StatusForbidden, gin.H{"message": "user-only"})
 		return
 	}
+	userid, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusNotFound, gin.H{"message": "user id doesn't exsist"})
+		return
+	}
+	userID := userid.(string)
+	tasks, err := tc.service.GetTasks(userID)
 
-	_, err := tc.data.UpdateTask(id, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	ctx.JSON(http.StatusOK, tasks)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Task updated"})
 }
-
-func (tc *TaskController) DeleteTask(c *gin.Context) {
-	id := c.Param("id")
-	_, err := tc.data.DeleteTask(id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+func (tc *TaskController) UpdateTask(ctx *gin.Context) {
+	role, exists := ctx.Get("role")
+	if !exists || role != "user" {
+		ctx.JSON(http.StatusForbidden, gin.H{"message": "user-only"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Task deleted"})
+	id := ctx.Param("id")
+
+	var updatedTask models.Task
+
+	if err := ctx.BindJSON(&updatedTask); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	task, err := tc.service.UpdateTask(id, &updatedTask)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, task)
+
+}
+func (tc *TaskController) RemoveTask(ctx *gin.Context) {
+	role, exists := ctx.Get("role")
+	if !exists || role != "user" {
+		ctx.JSON(http.StatusForbidden, gin.H{"message": "You are not authorized"})
+		return
+	}
+
+	id := ctx.Param("id")
+	result, err := tc.service.RemoveTask(id)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": result})
+
 }

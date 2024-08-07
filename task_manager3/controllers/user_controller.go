@@ -2,63 +2,102 @@ package controllers
 
 import (
 	"net/http"
-	"os"
 	"task_manager3/data"
 	"task_manager3/models"
-	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserController struct {
-	userService *data.UserService
+	service data.UserService
 }
 
-func NewUserController(userService *data.UserService) *UserController {
-	return &UserController{userService: userService}
+func NewUserController(service data.UserService) *UserController {
+	return &UserController{service: service}
 }
 
-func (uc *UserController) Register(c *gin.Context) {
+func (us *UserController) Register(ctx *gin.Context) {
+
 	var user models.User
-	if err := c.BindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := uc.userService.Register(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	result, err := us.service.Register(&user)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(), "user": user})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
+	oid, ok := result.InsertedID.(primitive.ObjectID)
+
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrive the inserted ID"})
+		return
+	}
+	user.ID = oid
+	ctx.JSON(http.StatusCreated, gin.H{"message": "registered successfully", "user": user})
+
 }
 
-func (uc *UserController) Login(c *gin.Context) {
-	var loginData models.User
-	if err := c.BindJSON(&loginData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func (us *UserController) Login(ctx *gin.Context) {
+
+	var loginUser models.User
+	if err := ctx.ShouldBindJSON(&loginUser); err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	user, err := uc.userService.Authenticate(loginData.Email, loginData.Password)
+	token, err := us.service.Login(&loginUser)
+
+	if err != nil || token == "" {
+		ctx.JSON(401, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(200, gin.H{"message": "user logged in successfully", "token": token})
+
+}
+
+func (us *UserController) GetUser(ctx *gin.Context) {
+
+	role, exists := ctx.Get("role")
+
+	if !exists || role != "admin" {
+		ctx.JSON(http.StatusForbidden, gin.H{"message": "admin-only", "role": role})
+		return
+	}
+
+	email := ctx.Param("email")
+	user, err := us.service.GetUser(email)
+
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
-		"email":   user.Email,
-		"role":    user.Role,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
-	})
+	ctx.JSON(http.StatusOK, user)
 
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+}
+
+func (us *UserController) GetUsers(ctx *gin.Context) {
+	role, exists := ctx.Get("role")
+
+	if !exists || role != "admin" {
+		ctx.JSON(http.StatusForbidden, gin.H{"message": "admin-only"})
+	}
+
+	users, err := us.service.GetUsers()
+
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": tokenString})
+	ctx.JSON(http.StatusOK, users)
+
 }
