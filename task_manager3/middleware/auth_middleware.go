@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -60,6 +61,7 @@ func UserAuthorizaiton() gin.HandlerFunc {
 		userID, userIDExists := claims["user_id"]
 		email, emailExists := claims["email"]
 		role, roleExists := claims["role"]
+		log.Println(claims)
 
 		if !userIDExists || !emailExists || !roleExists {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Token does not contain necessary claims"})

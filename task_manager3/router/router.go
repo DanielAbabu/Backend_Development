@@ -11,14 +11,16 @@ func SetRouter(c *controllers.TaskController, u *controllers.UserController) *gi
 
 	router := gin.Default()
 
-	router.GET("tasks/", middleware.UserAuthorizaiton(), c.GetTasks)
+	router.GET("/tasks", middleware.UserAuthorizaiton(), c.GetTasks)
 	router.GET("tasks/:id", middleware.UserAuthorizaiton(), c.GetTask)
 	router.PUT("tasks/:id", middleware.UserAuthorizaiton(), c.UpdateTask)
-	router.POST("tasks/", middleware.UserAuthorizaiton(), c.CreateTask)
+	router.POST("/task", middleware.UserAuthorizaiton(), c.CreateTask)
 	router.DELETE("tasks/:id", middleware.UserAuthorizaiton(), c.RemoveTask)
 
-	router.GET("users/", middleware.UserAuthorizaiton(), u.GetUsers)
+	router.GET("users", middleware.UserAuthorizaiton(), u.GetUsers)
 	router.GET("user/:email", middleware.UserAuthorizaiton(), u.GetUser)
+	router.DELETE("user/:email", middleware.UserAuthorizaiton(), u.DeleteUser)
+
 	router.POST("/register", u.Register)
 	router.POST("/login", u.Login)
 

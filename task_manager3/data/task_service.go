@@ -20,16 +20,24 @@ func NewTaskService(db *mongo.Database) *TaskService {
 
 }
 
-func (ts *TaskService) CreateTask(newtask *models.Task) (*mongo.InsertOneResult, error) {
+func (tc *TaskService) CreateTask(newtask *models.Task) (*mongo.InsertOneResult, error) {
 
-	if newtask.Description == "" || newtask.Status == "" || newtask.Title == "" {
-		return nil, errors.New("incomplete information")
+	if newtask.Title == "" {
+		return nil, errors.New("title can not be empty")
 	}
 
-	return ts.collection.InsertOne(context.TODO(), newtask)
+	if newtask.Status == "" {
+		return nil, errors.New("status can not be empty")
+	}
+	nn, err := tc.collection.InsertOne(context.TODO(), newtask)
+	if err != nil {
+		return nil, errors.New("couldnt insert")
+	}
+
+	return nn, nil
 }
 
-func (ts *TaskService) GetTask(id string) (*models.Task, error) {
+func (tc *TaskService) GetTask(id string) (*models.Task, error) {
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -37,7 +45,7 @@ func (ts *TaskService) GetTask(id string) (*models.Task, error) {
 
 	var task models.Task
 
-	err = ts.collection.FindOne(context.TODO(), bson.M{"_id": oid}).Decode(&task)
+	err = tc.collection.FindOne(context.TODO(), bson.M{"_id": oid}).Decode(&task)
 
 	if err != nil {
 		return nil, err
@@ -46,12 +54,12 @@ func (ts *TaskService) GetTask(id string) (*models.Task, error) {
 	return &task, nil
 
 }
-func (ts *TaskService) GetTasks(userid string) (*[]models.Task, error) {
+func (tc *TaskService) GetTasks(userid string) (*[]models.Task, error) {
 	uid, err := primitive.ObjectIDFromHex(userid)
 	if err != nil {
 		return nil, err
 	}
-	cursor, err := ts.collection.Find(context.TODO(), bson.M{"user_id": uid})
+	cursor, err := tc.collection.Find(context.TODO(), bson.M{"user_id": uid})
 
 	if err != nil {
 		return nil, err
@@ -66,15 +74,18 @@ func (ts *TaskService) GetTasks(userid string) (*[]models.Task, error) {
 	return &tasks, nil
 
 }
-func (ts *TaskService) UpdateTask(id string, updatedtask *models.Task) (*mongo.UpdateResult, error) {
+func (tc *TaskService) UpdateTask(id string, updatedtask *models.Task) (*models.Task, error) {
 
 	oid, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
 		return nil, err
 	}
+	temTask, _ := tc.GetTask(id)
+	updatedtask.ID = temTask.ID
+	updatedtask.UserID = temTask.UserID
 
-	return ts.collection.UpdateOne(
+	_, err = tc.collection.UpdateOne(
 		context.TODO(),
 		bson.M{"_id": oid},
 		bson.D{
@@ -82,8 +93,13 @@ func (ts *TaskService) UpdateTask(id string, updatedtask *models.Task) (*mongo.U
 		},
 	)
 
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedtask, nil
 }
-func (ts *TaskService) RemoveTask(id string) (*mongo.DeleteResult, error) {
+func (tc *TaskService) RemoveTask(id string) (*mongo.DeleteResult, error) {
 
 	oid, err := primitive.ObjectIDFromHex(id)
 
@@ -91,6 +107,6 @@ func (ts *TaskService) RemoveTask(id string) (*mongo.DeleteResult, error) {
 		return nil, err
 	}
 
-	return ts.collection.DeleteOne(context.TODO(), bson.M{"_id": oid})
+	return tc.collection.DeleteOne(context.TODO(), bson.M{"_id": oid})
 
 }
