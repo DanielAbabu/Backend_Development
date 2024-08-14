@@ -5,22 +5,16 @@ import (
 	"task_manager4/Domain"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func GetAllTasks(tu Domain.TaskUsecase, c *gin.Context) {
-	f, exists := c.Get("filter")
+	userid, exists := c.Get("user_id")
 	if !exists {
-		c.IndentedJSON(http.StatusBadGateway, gin.H{"error": "filter couldn't be found"})
-
+		c.JSON(http.StatusNotFound, gin.H{"message": "user id doesn't exsist"})
+		return
 	}
-
-	filter, ok := f.(bson.M)
-	if !ok {
-		c.IndentedJSON(http.StatusBadGateway, gin.H{"error": "type assertion didn't work"})
-	}
-
-	tasks, err := tu.GetTasks(filter)
+	userID := userid.(string)
+	tasks, err := tu.GetTasks(userID)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 	}

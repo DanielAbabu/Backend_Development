@@ -3,7 +3,6 @@ package Usecases
 import (
 	"task_manager4/Domain"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -22,8 +21,8 @@ func (TUC *TaskUC) PostTask(task Domain.Task, user Domain.DBUser) (Domain.Task, 
 	return TUC.repo.CreateTask(task)
 }
 
-func (TUC *TaskUC) GetTasks(filter bson.M) ([]Domain.Task, error) {
-	return TUC.repo.GetAllTasks(filter)
+func (TUC *TaskUC) GetTasks(userid string) ([]Domain.Task, error) {
+	return TUC.repo.GetAllTasks(userid)
 }
 
 func (TUC *TaskUC) GetTask(id string, userId primitive.ObjectID) (Domain.Task, error) {

@@ -83,26 +83,23 @@ func (TR *TaskRepo) UpdateTaskById(id string, task Domain.Task) (Domain.Task, er
 	return task, nil
 }
 
-func (TR *TaskRepo) GetAllTasks(filter bson.M) ([]Domain.Task, error) {
-	cursor, err := TR.coll.Find(context.TODO(), filter)
+func (TR *TaskRepo) GetAllTasks(userid string) ([]Domain.Task, error) {
+	uid, err := primitive.ObjectIDFromHex(userid)
+	if err != nil {
+		return nil, err
+	}
+	cursor, err := TR.coll.Find(context.TODO(), bson.M{"user_id": uid})
 
 	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(context.TODO())
 
 	var tasks []Domain.Task
 
-	for cursor.Next(context.TODO()) {
-		task := Domain.Task{}
-		err := cursor.Decode(&task)
-
-		if err != nil {
-			return nil, err
-		}
-
-		tasks = append(tasks, task)
+	if err = cursor.All(context.TODO(), &tasks); err != nil {
+		return nil, err
 	}
-
 	return tasks, nil
 }
 

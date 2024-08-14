@@ -3,7 +3,6 @@ package Domain
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -18,16 +17,16 @@ type Task struct {
 
 type TaskUsecase interface {
 	PostTask(Task, DBUser) (Task, error)
-	GetTasks(bson.M) ([]Task, error)
+	GetTasks(userid string) ([]Task, error)
 	GetTask(string, primitive.ObjectID) (Task, error)
 	UpdateTask(string, Task, DBUser) (Task, error)
 	DeleteTask(string, primitive.ObjectID) error
 }
 
 type TaskRepository interface {
-	CreateTask(Task) (Task, error)
-	DeleteTaskById(string, primitive.ObjectID) error
-	UpdateTaskById(string, Task) (Task, error)
-	GetAllTasks(bson.M) ([]Task, error)
-	FindTaskById(string, primitive.ObjectID) (Task, error)
+	CreateTask(task Task) (Task, error)
+	GetAllTasks(userid string) ([]Task, error)
+	FindTaskById(id string, userId primitive.ObjectID) (Task, error)
+	UpdateTaskById(id string, task Task) (Task, error)
+	DeleteTaskById(id string, userId primitive.ObjectID) error
 }
