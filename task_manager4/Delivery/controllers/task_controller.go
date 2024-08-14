@@ -8,13 +8,17 @@ import (
 )
 
 func GetAllTasks(tu Domain.TaskUsecase, c *gin.Context) {
-	userid, exists := c.Get("user_id")
+	userid, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusNotFound, gin.H{"message": "user id doesn't exsist"})
 		return
 	}
-	userID := userid.(string)
-	tasks, err := tu.GetTasks(userID)
+	usr, ok := userid.(Domain.DBUser)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "type assertion didn't work"})
+		return
+	}
+	tasks, err := tu.GetTasks(usr.ID.Hex())
 	if err != nil {
 		c.IndentedJSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 	}
@@ -24,17 +28,18 @@ func GetAllTasks(tu Domain.TaskUsecase, c *gin.Context) {
 
 func GetTaskById(tu Domain.TaskUsecase, c *gin.Context) {
 	id := c.Param("id")
-	user, exists := c.Get("user")
+	userid, exists := c.Get("user")
 	if !exists {
-		c.IndentedJSON(http.StatusBadGateway, gin.H{"error": "user couldn't be found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "user id doesn't exsist"})
+		return
 	}
-
-	usr, ok := user.(Domain.DBUser)
+	usr, ok := userid.(Domain.DBUser)
 	if !ok {
-		c.IndentedJSON(http.StatusBadGateway, gin.H{"error": "type assertion didn't work"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "type assertion didn't work"})
+		return
 	}
 
-	task, err := tu.GetTask(id, usr.ID)
+	task, err := tu.GetTask(id, usr.ID.Hex())
 	if err == nil {
 		c.IndentedJSON(http.StatusOK, task)
 	}
@@ -71,18 +76,18 @@ func PostTask(tu Domain.TaskUsecase, c *gin.Context) {
 
 func DeleteTask(tu Domain.TaskUsecase, c *gin.Context) {
 	id := c.Param("id")
-	user, exists := c.Get("user")
+	userid, exists := c.Get("user")
 	if !exists {
-		c.IndentedJSON(http.StatusBadGateway, gin.H{"error": "user couldn't be found"})
-
+		c.JSON(http.StatusNotFound, gin.H{"message": "user id doesn't exsist"})
+		return
 	}
-
-	usr, ok := user.(Domain.DBUser)
+	usr, ok := userid.(Domain.DBUser)
 	if !ok {
-		c.IndentedJSON(http.StatusBadGateway, gin.H{"error": "type assertion didn't work"})
-
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "type assertion didn't work"})
+		return
 	}
-	err := tu.DeleteTask(id, usr.ID)
+
+	err := tu.DeleteTask(id, usr.ID.Hex())
 	if err == nil {
 		c.IndentedJSON(http.StatusOK, gin.H{"messages": "deleted successfully"})
 

@@ -42,9 +42,13 @@ func (TR *TaskRepo) CreateTask(task Domain.Task) (Domain.Task, error) {
 	return task, nil
 }
 
-func (TR *TaskRepo) DeleteTaskById(id string, userId primitive.ObjectID) error {
+func (TR *TaskRepo) DeleteTaskById(id string, userid string) error {
 	obId, _ := primitive.ObjectIDFromHex(id)
-	query := bson.M{"_id": obId, "user._id": userId}
+	uid, err := primitive.ObjectIDFromHex(userid)
+	if err != nil {
+		return err
+	}
+	query := bson.M{"_id": obId, "user._id": uid}
 
 	res, err := TR.coll.DeleteOne(context.TODO(), query)
 
@@ -88,12 +92,14 @@ func (TR *TaskRepo) GetAllTasks(userid string) ([]Domain.Task, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// log.Fatal(uid)
+	// fmt.Println(uid)
 	cursor, err := TR.coll.Find(context.TODO(), bson.M{"user_id": uid})
 
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(context.TODO())
 
 	var tasks []Domain.Task
 
@@ -103,11 +109,15 @@ func (TR *TaskRepo) GetAllTasks(userid string) ([]Domain.Task, error) {
 	return tasks, nil
 }
 
-func (TR *TaskRepo) FindTaskById(id string, userId primitive.ObjectID) (Domain.Task, error) {
+func (TR *TaskRepo) FindTaskById(id string, userid string) (Domain.Task, error) {
 	obId, _ := primitive.ObjectIDFromHex(id)
-	query := bson.M{"_id": obId, "user._id": userId}
+	uid, err := primitive.ObjectIDFromHex(userid)
+	if err != nil {
+		return Domain.Task{}, err
+	}
+	query := bson.M{"_id": obId, "user._id": uid}
 	var task Domain.Task
-	err := TR.coll.FindOne(context.TODO(), query).Decode(&task)
+	err = TR.coll.FindOne(context.TODO(), query).Decode(&task)
 	if err != nil {
 		return Domain.Task{}, err
 	}

@@ -2,8 +2,6 @@ package Usecases
 
 import (
 	"task_manager4/Domain"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type TaskUC struct {
@@ -25,7 +23,7 @@ func (TUC *TaskUC) GetTasks(userid string) ([]Domain.Task, error) {
 	return TUC.repo.GetAllTasks(userid)
 }
 
-func (TUC *TaskUC) GetTask(id string, userId primitive.ObjectID) (Domain.Task, error) {
+func (TUC *TaskUC) GetTask(id string, userId string) (Domain.Task, error) {
 	return TUC.repo.FindTaskById(id, userId)
 }
 
@@ -34,6 +32,6 @@ func (TUC *TaskUC) UpdateTask(id string, task Domain.Task, user Domain.DBUser) (
 	return TUC.repo.UpdateTaskById(id, task)
 }
 
-func (TUC *TaskUC) DeleteTask(id string, userId primitive.ObjectID) error {
+func (TUC *TaskUC) DeleteTask(id string, userId string) error {
 	return TUC.repo.DeleteTaskById(id, userId)
 }

@@ -55,6 +55,7 @@ func RoleBasedAuth(protected bool) gin.HandlerFunc {
 		}
 
 		c.Set("user", user)
+		c.Set("user_id", claims.ID.Hex())
 		c.Next()
 	}
 
